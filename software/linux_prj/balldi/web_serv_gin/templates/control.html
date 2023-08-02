@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html>
+
+<head lang="zh">
+	<meta charset="UTF-8">
+	<title>控制器</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no" />
+
+	<link href="css/control.css?v=4" rel="stylesheet" type="text/css" />
+</head>
+
+<style>
+    body{
+        display:flex;
+        position:fixed;
+        justify-content: space-between;
+        left:0;
+        width:100%;
+        top:0;
+        height:100%;
+        margin:0;
+        padding:0;
+        border:0;
+        flex-direction: column;
+    }
+    .div-line-area{
+        display:flex;
+        justify-content: space-between;
+        flex-direction: row;
+        max-height:2em;
+    }
+    #video_cam{
+        max-height:400px;
+        width:100%;
+    }
+	.controller_getval{
+		height: 20px;
+	}
+	#read_para{
+        display:flex;
+		width: 45%;
+		max-height: 1.8em;
+		background-color:rgb(198, 208, 230);
+		margin:0;
+		padding:0;
+		border:0;
+		display:flex;
+		flex-direction: column;
+        justify-content: flex-start;
+		align-items: flex-start;
+	}
+
+    #image_cam{
+        max-height: 250px;
+    }
+
+	#log_area{
+        /*display:flex;*/
+        display:none;
+		width:45%;
+		max-height: 250px;
+		resize:none;
+		overflow-y:scroll;
+		user-select:none;
+		z-index:0;
+	}
+
+
+</style>
+
+<script type="importmap">
+	{
+		"imports": {
+			"ws": "/js/ws.js",
+			"tool": "/js/tool.js",
+			"control": "/js/control.js"
+		}
+	}
+</script>
+
+<script type="module">
+
+	import * as WS from 'ws';
+	import * as CONTROL from 'control';
+	import * as TOOL from 'tool';
+    //import * as WFS from 'wfs';
+
+    //function init_video(){
+    //    //video
+    //    var video = document.getElementById("video_cam");
+
+    //    if (Wfs.isSupported()) {
+    //        var wfs = new Wfs();
+    //        //give a empty frame to solve chorme bug
+    //        let empty_frame = new Uint8Array(4);
+    //        empty_frame[0] = 0;//make head
+    //        empty_frame[1] = 0;
+    //        empty_frame[2] = 1;
+    //        empty_frame[3] = 10;
+    //        wfs.trigger(Event.H264_DATA_PARSING, {data:empty_frame});
+    //        wfs.attachMedia(video,'chx','H264Raw','wscam');
+    //    }
+
+    //    setInterval(function() {
+    //        if(video.buffered.length <= 0)
+    //            return;
+
+    //        let end = video.buffered.end(0);
+    //        let now = video.currentTime;
+    //        if(end - now > 0.8) {
+    //            console.log("now:"+now+" end:"+end);
+    //            video.currentTime = end - 0.8;
+    //        }
+    //    }, 1000);
+    //}
+
+	const cmd_get_dic = {
+		"20":0,		//left speed
+		"21":0,		//right speed
+		"48":0,		//bat vol
+		"49":0,		//proc vol
+		"50":0,		//chrg level
+		"51":0,		//is chrg
+		"52":0,		//is stdby
+	};
+
+	var log_cnt = 0
+	var log_step = 15;
+	var wlog = function(log){
+		var log_area = document.getElementById("log_area");
+
+		if(log_cnt < log_step)
+		{
+			log_cnt += 1;
+		}
+		else
+		{
+			log_area.value = "";
+			log_cnt = 0;
+		}
+
+		log_area.value += log + "\n";
+	}
+
+    const ws = new WS.Ws_drv(
+                    "ws://" + window.location.host + "/wsdrv",
+                    wlog,
+                    cmd_get_dic
+                );
+
+	function dom_set_center(dom) {
+		var current = dom;
+		var parent = current.parentNode;
+
+		var p_x1 = parent.offsetLeft;
+		var p_x2 = p_x1 + parent.offsetWidth;
+		var p_y1 = parent.offsetTop;
+		var p_y2 = p_y1 + parent.offsetHeight;
+
+		var l = (p_x1 + p_x2 - current.offsetWidth) / 2;
+		var r = (p_y1 + p_y2 - current.offsetHeight) / 2;
+
+		current.style.left = l + "px";
+		current.style.top = r + "px";
+	}
+
+	//ctl_x ctl_y -> [-100, 100]
+	var fb = 0;
+	var turn = 0;
+	var angle = 50;
+	function ctl_para_set(dom, ctl_x, ctl_y){
+		let id = dom.id;
+        wlog("id:"+id+" x:"+ctl_x+" y:"+ctl_y);
+
+		if('wheel_fb' == id){
+			fb = -(ctl_y);
+		}
+		else if('wheel_turn' == id){
+			turn = (ctl_x);
+		}
+		else if('servo_angle' == id){
+			angle = (ctl_y + 100) / 2;
+		}
+	}
+
+	var fb_last = 0;
+	var turn_last = 0;
+	var angle_last = 0;
+	function send_para() {
+		if(fb != fb_last)
+		{
+            let fb_fix = parseInt(fb);
+            ws.send_cmd("208", fb_fix.toString())
+			fb_last = fb;
+            wlog("fb");
+		}
+
+        if(turn != turn_last)
+        {
+            let turn_fix = parseInt(turn);
+            ws.send_cmd("209", turn_fix.toString())
+			turn_last = turn;
+            wlog("turn");
+        }
+
+		if(angle != angle_last)
+		{
+			let a = parseInt(angle);
+			ws.send_cmd("162", a.toString());
+			angle_last = angle;
+		}
+	}
+
+	function evt_ctl_poi_end(event)
+	{
+		CONTROL.ctl_poi_end(event, ctl_para_set);
+	}
+
+	function evt_ctl_poi_move(event){
+		CONTROL.ctl_poi_move(event, ctl_para_set);
+	}
+
+    function set_dom_readval_text(domid, getcmd)
+    {
+        document.getElementById(domid).text = domid+": "+cmd_get_dic[getcmd];
+    }
+
+	window.onload = function(){
+        //init_video();
+
+        //control
+        //reg control log
+        CONTROL.reg_control_log(wlog);
+
+		//init
+		ws.init();
+
+		//ws heart
+		setInterval(function() {
+			ws.send_cmd("999", "ping");
+		}, 1000 * 20);
+
+		//cmd get val
+		setInterval(function() {
+			ws.send_cmd("48", "0");
+			ws.send_cmd("49", "0");
+			ws.send_cmd("50", "0");
+			//ws.send_cmd("51", "0");
+			ws.send_cmd("52", "0");
+			setTimeout(function(){
+				set_dom_readval_text("bat_vol", "48");
+				set_dom_readval_text("proc_vol", "49");
+				set_dom_readval_text("chrg_rate", "50");
+				//set_dom_readval_text("is_chrg", "51");
+				set_dom_readval_text("is_stby", "52");
+			}, 1000);
+		}, 1000 * 2);
+
+		//ws send para update
+		setInterval(send_para , 200);
+
+		//event && dom init
+		var ctl_pot_list = document.getElementsByClassName("ctl-point");
+		for(var i = 0; i < ctl_pot_list.length; ++i){
+			dom_set_center(ctl_pot_list[i]);
+			ctl_pot_list[i].addEventListener("touchmove", evt_ctl_poi_move);
+			ctl_pot_list[i].addEventListener("mousemove", evt_ctl_poi_move);
+			ctl_pot_list[i].addEventListener("touchend", evt_ctl_poi_end);
+		}
+
+        var image = document.getElementById("image_cam");
+        var ws_cam = new WebSocket("ws://" + window.location.host + "/wscam");
+
+        ws_cam.onmessage = function(msg) {
+            let arrayBuffer = msg.data;
+
+            var reader = new FileReader();
+            reader.onload = function(e) {
+                //console.log(e.target.result);
+                image.src = e.target.result;
+            };
+            reader.readAsDataURL(arrayBuffer);
+        }
+	}
+
+	export {  }
+</script>
+
+<body>
+
+
+<div class = "div-line-area">
+<div id = "read_para">
+	<a class = "controller_getval" id = "bat_vol"></a>
+	<a class = "controller_getval" id = "proc_vol"></a>
+	<a class = "controller_getval" id = "chrg_rate"></a>
+	<a class = "controller_getval" id = "is_chrg"></a>
+	<a class = "controller_getval" id = "is_stby"></a>
+</div>
+
+<textarea id = "log_area" readonly disable></textarea>
+</div>
+
+<img id="image_cam">
+
+
+<div class = "ctl-area">
+    <div class = "ctl-div" id = "ctl_l_div">
+        <div class = "ctl-slot" id = "controller_l_slot">
+            <div class = "ctl-point" id = "wheel_fb"></div>
+        </div>
+    </div>
+
+    <div class = "ctl-div" id = "ctl_servo_div" ctl_keep = "yes">
+        <div class = "ctl-slot" id = "controller_servo_slot">
+            <div class = "ctl-point" id = "servo_angle"></div>
+        </div>
+    </div>
+
+    <div class = "ctl-div" id = "ctl_r_div">
+        <div class = "ctl-slot" id = "controller_r_slot">
+            <div class = "ctl-point" id = "wheel_turn"></div>
+        </div>
+    </div>
+
+</div>
+
+</body>
+
+</html>

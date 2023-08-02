@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html>
+
+<head lang="zh">
+	<meta charset="UTF-8">
+	<title>fun</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no" />
+
+	<link href="css/control.css?v=3" rel="stylesheet" type="text/css" />
+</head>
+
+<style>
+    body{
+        display:flex;
+        position:fixed;
+        justify-content: space-around;
+        left:0;
+        width:100%;
+        top:0;
+        height:100%;
+        margin:0;
+        padding:0;
+        border:0;
+        flex-direction: column;
+    }
+    .div-btn{
+        display:flex;
+        justify-content: flex-start;
+    }
+
+    .div-para{
+        display:flex;
+        justify-content: space-around;
+    }
+
+
+
+</style>
+
+<script type="importmap">
+	{
+		"imports": {
+			"ws": "/js/ws.js",
+			"tool": "/js/tool.js",
+			"control": "/js/control.js"
+		}
+	}
+</script>
+
+<script type="module">
+
+	import * as WS from 'ws';
+	import * as CONTROL from 'control';
+	import * as TOOL from 'tool';
+
+    const cmd_get_dic = {
+		'215':0,		//balance
+	};
+
+    var balance_p = 400;  //5.0 * 100
+    var balance_d = 50;  //1.0 * 100
+
+    function balance(){
+        WS.ws_send('215', 1);
+    }
+
+    function balance_cancel(){
+        WS.ws_send('215', 0);
+    }
+
+    function update_dom_para(){
+        document.getElementById('balance_p').text = balance_p/100;
+        document.getElementById('balance_d').text = balance_d/100;
+    }
+
+	window.onload = function(){
+		//init
+		WS.ws_init();
+
+        //reg cmd dictionary
+        WS.reg_cmd_get_dic(cmd_get_dic);
+
+		//ws heart
+		setInterval(function() {
+			WS.ws_send('999', 'ping');
+		}, 1000 * 20);
+
+        //switch
+        document.getElementById('btn_balance').onclick = function(event){
+            balance();
+        }
+
+        document.getElementById('btn_balance_cancel').onclick = function(event){
+            balance_cancel();
+        }
+
+        //pid
+        update_dom_para();
+
+        document.getElementById('btn_p_add_01').onclick = function(event){
+            balance_p += 10;
+            WS.ws_send('216', balance_p);
+            update_dom_para();
+        }
+        document.getElementById('btn_p_add_1').onclick = function(event){
+            balance_p += 100;
+            WS.ws_send('216', balance_p);
+            update_dom_para();
+        }
+        document.getElementById('btn_p_sub_01').onclick = function(event){
+            balance_p -= 10;
+            WS.ws_send('216', balance_p);
+            update_dom_para();
+        }
+        document.getElementById('btn_p_sub_1').onclick = function(event){
+            balance_p -= 100;
+            WS.ws_send('216', balance_p);
+            update_dom_para();
+        }
+        document.getElementById('btn_d_add_01').onclick = function(event){
+            balance_d += 10;
+            WS.ws_send('217', balance_d);
+            update_dom_para();
+        }
+        document.getElementById('btn_d_add_1').onclick = function(event){
+            balance_d += 100;
+            WS.ws_send('217', balance_d);
+            update_dom_para();
+        }
+        document.getElementById('btn_d_sub_01').onclick = function(event){
+            balance_d -= 10;
+            WS.ws_send('217', balance_d);
+            update_dom_para();
+        }
+        document.getElementById('btn_d_sub_1').onclick = function(event){
+            balance_d -= 100;
+            WS.ws_send('217', balance_d);
+            update_dom_para();
+        }
+
+        //move ctl about
+        document.getElementById('btn_en_lr').onclick = function(event){
+            WS.ws_send('210', 1);
+        }
+        document.getElementById('btn_dis_lr').onclick = function(event){
+            WS.ws_send('210', 0);
+        }
+        document.getElementById('btn_en_fly').onclick = function(event){
+            WS.ws_send('211', 1);
+        }
+        document.getElementById('btn_dis_fly').onclick = function(event){
+            WS.ws_send('211', 0);
+        }
+	}
+
+	export { }
+</script>
+
+<body>
+
+<head>Only for driver2.0 (brush moto)</head>
+</br>
+<head>仅在2.0驱动版本可用(有刷电机)</head>
+<div class="div-btn">
+    <button id='btn_balance'>倒立摆平衡</button>
+    <button id='btn_balance_cancel'>取消倒立摆平衡</button>
+</div>
+
+<div class="div-para">
+    <a>P:</a>
+    <a id='balance_p'></a>
+    <button id='btn_p_add_01'>+0.1</button>
+    <button id='btn_p_add_1'>+1</button>
+    <button id='btn_p_sub_01'>-0.1</button>
+    <button id='btn_p_sub_1'>-1</button>
+</div>
+
+<div class="div-para">
+    <a>D:</a>
+    <a id='balance_d'></a>
+    <button id='btn_d_add_01'>+0.1</button>
+    <button id='btn_d_add_1'>+1</button>
+    <button id='btn_d_sub_01'>-0.1</button>
+    <button id='btn_d_sub_1'>-1</button>
+</div>
+
+<div class="div-btn">
+    <button id='btn_en_lr'>启用运动时左右轮控制</button>
+    <button id='btn_dis_lr'>禁用运动时左右轮控制</button>
+    <button id='btn_en_fly'>启用运动时飞轮控制</button>
+    <button id='btn_dis_fly'>禁用运动时飞轮控制</button>
+</div>
+
+</body>
+
+</html>

@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html>
+    <title>RGB</title>
+    <style>
+        body {
+            position: absolute;
+            padding: 0;
+            margin: 0;
+            left: 0;
+            top: 0;
+            right: 0;
+            bottom: 0;
+        }
+
+        #colors_selector {
+            display: flex;
+            justify-content: space-evenly;
+            align-items: center;
+            width:400px;
+            height:350px;
+        }
+
+        #colors_plane {
+            position: relative;
+            height:300px;
+            width:300px;
+            background-color: #FF0000;
+        }
+
+        #colors_plane_base {
+            position: absolute;
+            z-index: 0;
+            height:100%;
+            width:100%;
+            padding: 0;
+            background: -moz-linear-gradient(left, white 0%, rgba(255,255,255,0) 100%);
+            background: -webkit-gradient(linear, left top, right top, color-stop(0%, white), color-stop(100%, rgba(255,255,255,0)));
+            background: -webkit-linear-gradient(left, white 0%, rgba(255,255,255,0) 100%);
+            background: -o-linear-gradient(left, white 0%, rgba(255,255,255,0) 100%);
+            background: -webkit-gradient(linear, left top, right top, from(white), to(rgba(255,255,255,0)));
+            background: linear-gradient(to right, white 0%, rgba(255,255,255,0) 100%);
+        }
+
+        #colors_plane_mask {
+            position: absolute;
+            z-index: 1;
+            height:100%;
+            width:100%;
+            padding: 0;
+            background: -moz-linear-gradient(top, rgba(0,0,0,0) 0%, black 100%);
+            background: -webkit-gradient(linear, left top, left bottom, color-stop(0%, rgba(0,0,0,0)), color-stop(100%, black));
+            background: -webkit-linear-gradient(top, rgba(0,0,0,0) 0%, black 100%);
+            background: -o-linear-gradient(top, rgba(0,0,0,0) 0%, black 100%);
+            background: -webkit-gradient(linear, left top, left bottom, from(rgba(0,0,0,0)), to(black));
+            background:linear-gradient(to bottom, rgba(0,0,0,0) 0%, black 100%);
+        }
+
+        #colors_plane_point {
+            pointer-events: none;
+            position: absolute;
+            z-index: 1;
+            height:10px;
+            width:10px;
+            border: 2.5px solid #3d3d3d;
+            border-radius: 6px;
+            padding: 0;
+            margin-top: -6.2px;
+            margin-left: -6.2px;
+        }
+
+        #colors_slider {
+            position: relative;
+            margin-left: 1em;
+            height:300px;
+            width:30px;
+            padding: 0;
+        }
+
+        #colors_slider_base {
+            width: 100%;
+            height: 100%;
+            padding: 0;
+            background: -moz-linear-gradient(top, #FF0000 0%, #F0F000 17%, #00FF00 33%, #00FFFF 50%, #0000FF 66%, #FF00FF 83%, #FF0000 100%);
+            background: -webkit-gradient(linear, left top, left bottom, color-stop(0%, #FF0000), color-stop(17%, #F0F000), color-stop(33%, #00FF00), color-stop(50%, #00FFFF), color-stop(66%, #0000FF), color-stop(83%, #FF00FF), color-stop(100%, #FF0000));
+            background: -webkit-linear-gradient(top, #FF0000 0%, #F0F000 17%, #00FF00 33%, #00FFFF 50%, #0000FF 66%, #FF00FF 83%, #FF0000 100%);
+            background: -o-linear-gradient(top, #FF0000 0%, #F0F000 17%, #00FF00 33%, #00FFFF 50%, #0000FF 66%, #FF00FF 83%, #FF0000 100%);
+            background: -webkit-gradient(linear, left top, left bottom, from(#FF0000), color-stop(17%, #F0F000), color-stop(33%, #00FF00), color-stop(50%, #00FFFF), color-stop(66%, #0000FF), color-stop(83%, #FF00FF), to(#FF0000));
+            background: linear-gradient(to bottom, #FF0000 0%, #F0F000 17%, #00FF00 33%, #00FFFF 50%, #0000FF 66%, #FF00FF 83%, #FF0000 100%);
+        }
+
+        #colors_slider_point {
+            pointer-events: none;
+            position: absolute;
+            z-index: 1;
+            height:4px;
+            width:36px;
+            border: 3px solid #3d3d3d;
+            border-radius: 4px;
+            padding: 0;
+            margin-top: -4.4px;
+            margin-left: -5px;
+        }
+
+    </style>
+
+    <script>
+
+        function colors_slider_get_color(rate)
+        {
+            var rs = [0xFF,0xF0,0x00,0x00,0x00,0xFF,0xFF];
+            var gs = [0x00,0xF0,0xFF,0xFF,0x00,0x00,0x00];
+            var bs = [0x00,0x00,0x00,0xFF,0xFF,0xFF,0x00];
+
+            let get_rgb = (r,g,b,left,right,rate) => (
+                  (Math.round(r[left] + (r[right] - r[left]) * rate) << 16)
+                + (Math.round(g[left] + (g[right] - g[left]) * rate) << 8)
+                + (Math.round(b[left] + (b[right] - b[left]) * rate) << 0)
+            );
+
+            rate = Math.abs(rate);
+
+            if(rate < 0.17)
+            {
+                return get_rgb(rs,gs,bs,0,1,(rate - 0.0) / 0.17);
+            }
+            if(rate < 0.33)
+            {
+                return get_rgb(rs,gs,bs,1,2,(rate - 0.17) / 0.16);
+            }
+            if(rate < 0.5)
+            {
+                return get_rgb(rs,gs,bs,2,3,(rate - 0.33) / 0.17);
+            }
+            if(rate < 0.66)
+            {
+                return get_rgb(rs,gs,bs,3,4,(rate - 0.5) / 0.16);
+            }
+            if(rate < 0.83)
+            {
+                return get_rgb(rs,gs,bs,4,5,(rate - 0.66) / 0.17);
+            }
+
+            return get_rgb(rs,gs,bs,5,6,(rate - 0.83) / 0.17);
+        }
+
+        function dec_to_rgb(dec)
+        {
+            let str = dec.toString(16);
+            let len = str.length;
+
+            for(let i = 0; i < 6 - len; i++)
+            {
+                str = "0" + str;
+            }
+
+            return "#"+str;
+        }
+
+        var slider_rgb = 0xFF0000;
+        var plane_point_drag = 0;
+
+        function event_plane_down(event)
+        {
+            plane_point_drag = 1;
+            plane_move(event);
+        }
+        function event_plane_up(event)
+        {
+            plane_point_drag = 0;
+        }
+
+        function plane_move(event) {
+            event.preventDefault();
+
+            if(plane_point_drag == 0)
+                return ;
+
+            let mask = document.getElementById("colors_plane_mask");
+            let point = document.getElementById("colors_plane_point");
+
+            let wid_h = point.offsetWidth / 2;
+            let hei_h = point.offsetHeight / 2;
+
+            //console.log("id:"+mask.id+" h:"+hei_h+" w:"+wid_h);
+
+            let x = 0;
+            let y = 0;
+
+            if(event.targetTouches){
+                x = event.targetTouches[0].clientX;
+                y = event.targetTouches[0].clientY;
+            }
+            else{
+                x = event.clientX;
+                y = event.clientY;
+            }
+            let mask_bind_client = mask.getBoundingClientRect();
+            let p_x1 = mask_bind_client.left;
+            let p_x2 = p_x1 + mask_bind_client.width;
+            let p_y1 = mask_bind_client.top;
+            let p_y2 = p_y1 + mask_bind_client.height;
+
+            let p_wid_h = mask.offsetWidth / 2;
+            let p_hei_h = mask.offsetHeight / 2;
+
+            if(x < p_x1)
+            {
+                x = p_x1 ;
+            }
+            else if(x > p_x2)
+            {
+                x = p_x2 ;
+            }
+
+            if(y  < p_y1 )
+            {
+                y = p_y1;
+            }
+            else if(y > p_y2)
+            {
+                y = p_y2;
+            }
+
+            point.style.left = (x - p_x1) + "px";
+            point.style.top = (y - p_y1) + "px";
+
+            let rate_x = (x - p_x1) / mask_bind_client.width;
+            let rate_y = (y - p_y1) / mask_bind_client.height;
+        }
+
+        var slider_point_drag = 0;
+
+        function event_slider_down(event)
+        {
+            slider_point_drag = 1;
+            slider_move(event);
+            console.log("d");
+        }
+        function event_slider_up(event)
+        {
+            slider_point_drag = 0;
+            console.log("u");
+        }
+
+        function slider_move(event) {
+            event.preventDefault();
+            console.log("m");
+
+            if(slider_point_drag == 0)
+                return ;
+
+            let plane = document.getElementById("colors_plane");
+            let slider = document.getElementById("colors_slider_base");
+            let point = document.getElementById("colors_slider_point");
+
+            let hei_h = point.offsetHeight / 2;
+
+            let y = 0;
+
+            if(event.targetTouches){
+                y = event.targetTouches[0].clientY;
+            }
+            else{
+                y = event.clientY;
+            }
+            let slider_bind_client = slider.getBoundingClientRect();
+            let p_y1 = slider_bind_client.top;
+            let p_y2 = p_y1 + slider_bind_client.height;
+
+            let p_hei_h = slider.offsetHeight / 2;
+
+            if(y  < p_y1 )
+            {
+                y = p_y1;
+            }
+            else if(y > p_y2)
+            {
+                y = p_y2;
+            }
+
+            point.style.top = (y - p_y1) + "px";
+
+            let rate_y = (y - p_y1) / slider_bind_client.height;
+            slider_rgb = colors_slider_get_color(rate_y);
+            plane.style.backgroundColor = dec_to_rgb(slider_rgb);
+            //console.log("rate: " + rate_y + " color: " + dec_to_rgb(slider_rgb));
+        }
+
+        window.onload = function() {
+            document.getElementById("colors_plane_mask").addEventListener("touchstart", event_plane_down);
+            document.getElementById("colors_plane_mask").addEventListener("touchend",   event_plane_up);
+            document.getElementById("colors_plane_mask").addEventListener("touchmove",  plane_move);
+
+            document.getElementById("colors_plane_mask").addEventListener("mousedown",  event_plane_down);
+            document.getElementById("colors_selector").addEventListener("mouseup",    event_plane_up);
+            document.getElementById("colors_selector").addEventListener("mousemove",  plane_move);
+            document.body.addEventListener("mouseup",    event_plane_up);
+            document.body.addEventListener("mouseleave", event_plane_up);
+            document.body.addEventListener("mousemove",  plane_move);
+
+            document.getElementById("colors_slider_base").addEventListener("touchstart", event_slider_down);
+            document.getElementById("colors_slider_base").addEventListener("touchend",   event_slider_up);
+            document.getElementById("colors_slider_base").addEventListener("touchmove",  slider_move);
+
+            document.getElementById("colors_slider_base").addEventListener("mousedown",  event_slider_down);
+            document.getElementById("colors_selector").addEventListener("mouseup",    event_slider_up);
+            document.getElementById("colors_selector").addEventListener("mousemove",  slider_move);
+            document.body.addEventListener("mouseup",    event_slider_up);
+            document.body.addEventListener("mouseleave", event_slider_up);
+            document.body.addEventListener("mousemove",  slider_move);
+        }
+
+
+    </script>
+<body>
+    <div id="colors_selector">
+        <div id="colors_plane">
+            <div id="colors_plane_base"></div>
+            <div id="colors_plane_mask"></div>
+            <div id="colors_plane_point"></div>
+        </div>
+        <div id="colors_slider">
+            <div id="colors_slider_base"></div>
+            <div id="colors_slider_point"></div>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html>
+
+<head lang="zh">
+	<meta charset="UTF-8">
+	<title>Command</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no" />
+</head>
+
+<style>
+    body{
+        display:flex;
+        position:fixed;
+        justify-content: center;
+        left:0;
+        width:100%;
+        top:0;
+        height:100%;
+        margin:0;
+        padding:0;
+        border:0;
+        flex-direction: column;
+    }
+
+    .a-head {
+        margin-left:0.2em;
+        font-size:1.2em;
+    }
+
+    #div_cmd_history {
+        height:70%;
+    }
+
+    #text_cmd_history {
+        resize:none;
+        width:100%;
+        height:90%;
+        background-color:#D1D1D1;
+        padding:0;
+        border:0;
+    }
+
+    #div_text_cmd{
+        width:100%;
+        height:5em;
+    }
+
+    #div_text_cmd_in {
+        position:absolute;
+        width:100%;
+        height:5em;
+        padding:0;
+        border:0;
+    }
+
+    #text_cmd {
+        position:absolute;
+        resize:none;
+        left:0px;
+        right:0px;
+        height:auto;
+        padding:1em;
+    }
+
+    #div_btn_cmd {
+        display:flex;
+        flex-direction:row-reverse;
+    }
+
+    #btn_cmd {
+        height:3em;
+        width:4.5em;
+    }
+</style>
+
+<script type="module">
+
+    function post_send_cmd(str, succ_callback)
+    {
+        let f= new FormData();
+        f.append('cmd', str);
+
+
+        let xhr = new XMLHttpRequest();
+        xhr.open('POST', '/command/', true);
+        xhr.onreadystatechange = function() {
+            if(this.readyState == 4)
+            {
+                if(this.status == 200)
+                {
+                    succ_callback();
+                }
+                else if(this.status == 401)
+                {
+                    xhr.onreadystatechange = null;
+                    alert("state code:" + this.status + ", msg:" + this.responseText);
+                    return ;
+                }
+                else
+                {
+                    xhr.onreadystatechange = null;
+                }
+            }
+        }
+
+        xhr.send(f);
+    }
+
+    window.onload = function(){
+        var text_cmd = document.getElementById('text_cmd');
+        var text_cmd_history = document.getElementById('text_cmd_history');
+
+        function cmd_succ_do()
+        {
+            let time = new Date();
+            let cmd = text_cmd.value;
+
+            text_cmd_history.value += (time.toLocaleString() + ': ' + cmd + '\n');
+
+            text_cmd.value = '';
+        }
+
+        document.getElementById('btn_cmd').onclick = function(){
+            let str = text_cmd.value;
+            str = str.trim();
+            if(str.length > 0)
+                post_send_cmd(str, cmd_succ_do);
+        }
+    }
+
+	export {  }
+</script>
+
+<body>
+
+<div>
+    <a class='a-head'>command</a>
+</div>
+<div id='div_cmd_history'>
+    <textarea id='text_cmd_history' disabled></textarea>
+</div>
+<div id='div_text_cmd'>
+    <div id='div_text_cmd_in'>
+        <textarea id='text_cmd' placeholder='Input your command'></textarea>
+    </div>
+</div>
+<div id='div_btn_cmd'>
+    <button id='btn_cmd'>Send</button>
+</div>
+
+</body>
+
+</html>

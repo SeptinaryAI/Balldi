@@ -1,0 +1,1 @@
+Gin web server also use drv_api , so don't test drv_api while Gin web server is running

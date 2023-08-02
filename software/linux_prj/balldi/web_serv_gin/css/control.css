@@ -1,0 +1,73 @@
+	.ctl-div{
+		display:flex;
+		left: 0px;
+		top: 0px;
+		background-color:rgb(153, 153, 153);
+		margin:0;
+		padding:0;
+		border:0;
+		justify-content: center;
+		align-items: center;
+	}
+
+	.ctl-slot{
+		width: 0px;
+		margin:0;
+		padding:0;
+		border:0;
+        background-color: aquamarine;
+		display:flex;
+        align-items:center;
+        justify-content: space-around;
+	}
+
+	.ctl-point{
+		display:flex;
+        position:fixed;
+		width:100px;
+		height:100px;
+		margin:0;
+		padding:0;
+		border:0;
+		background-color: blue;
+	}
+
+    .ctl-area{
+        display:flex;
+        justify-content: space-around;
+		align-items: center;
+        max-height:200px;
+        flex-grow:1;
+        margin-bottom:3em;
+    }
+
+    #ctl_l_div{
+		background-color:#a3a3a3;
+        width:20px;
+        height:200px;
+    }
+    #controller_l_slot{
+        height:130px;
+    }
+
+    #ctl_servo_div{
+		background-color:#666666;
+        height:200px;
+        width:20px;
+    }
+    #controller_servo_slot{
+        height:130px;
+    }
+    #servo_angle{
+        height:40px;
+        width:40px;
+    }
+
+    #ctl_r_div{
+		background-color:#a7a7a7;
+        width:200px;
+        height:20px;
+    }
+    #controller_r_slot{
+        width:130px;
+    }

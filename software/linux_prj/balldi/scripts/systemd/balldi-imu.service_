@@ -1,0 +1,11 @@
+[Unit]
+Description=Balldi imu mpu6050 application
+Requires=balldi-drvserv.service
+
+[Service]
+Type=simple
+ExecStart={{BALLDI_DIR}}/imu_app/build/mpu6050.out
+
+[Install]
+WantedBy=multi-user.target
+Alias=balldi-imu.service

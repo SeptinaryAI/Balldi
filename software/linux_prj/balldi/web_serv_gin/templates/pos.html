@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html>
+
+<head lang="zh">
+	<meta charset="UTF-8">
+	<title>姿态</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no" />
+	<link href="css/pos.css" rel="stylesheet" type="text/css" />
+</head>
+
+<style>
+
+    #read_para {
+        position:absolute;
+        display:flex;
+        flex-direction: column;
+    }
+
+	#three_d{
+		left:0;
+		top:0;
+		width: 400px;
+		height: 400px;
+		background-color:bisque;
+		z-index: 1;
+	}
+
+</style>
+
+<script type="importmap">
+	{
+		"imports": {
+			"ws": "/js/ws.js",
+			"three": "/js/three.module.js",
+			"stlloader": "/js/STLLoader.js",
+			"balldi3d": "/js/balldi_3d.js",
+			"tool": "/js/tool.js",
+			"control": "/js/control.js"
+		}
+	}
+</script>
+
+<script type="module">
+	import * as THREE from 'three';
+	import { STLLoader } from '/js/STLLoader.js';
+
+	import * as WS from 'ws';
+	import * as CONTROL from 'control';
+	import * as TOOL from 'tool';
+	import * as BALLDI3D from 'balldi3d';
+
+    const CMD_GET_DISTANCE      = "80"
+    const USRCMD_GET_POS_PITCH  = "64"
+    const USRCMD_GET_POS_ROLL   = "65"
+    const USRCMD_GET_POS_YAW    = "66"
+
+    const cmd_get_dic = {
+		USRCMD_GET_POS_PITCH:0,		//pitch
+		USRCMD_GET_POS_ROLL :0,		//roll
+		USRCMD_GET_POS_YAW  :0,		//yaw
+	};
+
+    function set_dom_readval_text(domid, getcmd, postfix)
+    {
+        document.getElementById(domid).text = domid+": "+TOOL.int16x10_to_float(cmd_get_dic[getcmd]) + " " + postfix;
+    }
+
+	var item_3d;
+	window.onload = function(){
+		//init
+		WS.ws_init();
+
+        //reg cmd dictionary
+        WS.reg_cmd_get_dic(cmd_get_dic);
+
+		//ws heart
+		setInterval(function() {
+			WS.ws_send("999", "ping");
+		}, 1000 * 20);
+
+		setInterval(function() {
+			WS.ws_send(USRCMD_GET_POS_PITCH, "0");
+			WS.ws_send(USRCMD_GET_POS_ROLL , "0");
+			WS.ws_send(USRCMD_GET_POS_YAW  , "0");
+			WS.ws_send(CMD_GET_DISTANCE  , "0");
+			setTimeout(function(){
+				set_dom_readval_text("pitch",       USRCMD_GET_POS_PITCH, "°");
+				set_dom_readval_text("roll",        USRCMD_GET_POS_ROLL, "°");
+				set_dom_readval_text("yaw",         USRCMD_GET_POS_YAW, "°");
+				set_dom_readval_text("distance",    CMD_GET_DISTANCE, "mm");
+			}, 100);
+		}, 200);
+
+		//3d obj
+		item_3d = BALLDI3D.create_three(document.getElementById("three_d"));
+		setInterval(function() {
+			BALLDI3D.obj_set_roll(item_3d.mesh,
+				TOOL.int16x10_to_float(cmd_get_dic["64"]),
+				-TOOL.int16x10_to_float(cmd_get_dic["65"]),
+				//-TOOL.int16x10_to_float(cmd_get_dic["66"])
+               0 
+				);
+			item_3d.renderer.render(item_3d.scene, item_3d.camera);
+		}, 30 );
+	}
+
+	export { item_3d }
+</script>
+
+<body>
+
+
+
+<div id = "three_d">
+    <div id = "read_para">
+        <a class = "controller_getval" id = "pitch"></a>
+        <a class = "controller_getval" id = "roll"></a>
+        <div>
+        <a class = "controller_getval" id = "yaw"></a><a>(unbelievable)</a>
+        </div>
+    </div>
+</div>
+<div id = "read_tof">
+    <a id = "distance"></a>
+</div>
+
+</body>
+
+<script>
+
+</script>
+
+</html>

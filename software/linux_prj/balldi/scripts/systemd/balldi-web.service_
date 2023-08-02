@@ -1,0 +1,12 @@
+[Unit]
+Description=Balldi Gin web service
+Requires=balldi-drvserv.service
+Wants=balldi-imu.service
+
+[Service]
+Type=simple
+ExecStart={{BALLDI_DIR}}/web_serv_gin/start.sh
+
+[Install]
+WantedBy=multi-user.target
+Alias=balldi-web.service

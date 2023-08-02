@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html>
+
+<head lang="zh">
+	<meta charset="UTF-8">
+	<title>摄像头</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no" />
+</head>
+
+<style>
+#video_cam {
+    max-width:90%;
+    max-height:500px;
+}
+#div_rsn{
+    display:flex;
+    width:352px;
+    height:288px;
+}
+#canvas_rsn{
+    margin-left:-352px;
+}
+#image_rsn{
+    left:0;
+}
+</style>
+
+
+<script type="text/javascript" src="/js/wfs.js?v=16" ></script>
+
+<script>
+    //window.onload = function(){
+    //    var video = document.getElementById("video_cam");
+
+    //    if (Wfs.isSupported()) {
+    //        wfs = new Wfs();
+    //        //give a empty frame to solve chorme bug
+    //        let empty_frame = new Uint8Array(4);
+    //        empty_frame[0] = 0;//make head
+    //        empty_frame[1] = 0;
+    //        empty_frame[2] = 1;
+    //        empty_frame[3] = 10;
+    //        wfs.trigger(Event.H264_DATA_PARSING, {data:empty_frame});
+    //        wfs.attachMedia(video,'chx','H264Raw','wscam');
+    //    }
+
+    //    setInterval(function() {
+    //        if(video.buffered.length <= 0)
+    //            return;
+
+    //        let end = video.buffered.end(0);
+    //        let now = video.currentTime;
+    //        if(end - now > 0.8) {
+    //            console.log("now:"+now+" end:"+end);
+    //            video.currentTime = end - 0.8;
+    //        }
+    //    }, 1000);
+}
+
+    //'10,10,200,200,1,1,0.8612' -> {'x1':10, 'y1':10, 'x2':200, 'y2':200, 'label':1, 'id':1, 'score':0.8612}
+    function get_rsn_dict(rst_str)
+    {
+        let dic = {};
+        let l = rst_str.split(',');
+
+        if(l.length != 7)
+        {
+            return null;
+        }
+
+        dic['x1'] = parseInt(l[0]);
+        dic['y1'] = parseInt(l[1]);
+        dic['x2'] = parseInt(l[2]);
+        dic['y2'] = parseInt(l[3]);
+        dic['label'] = parseInt(l[4]);
+        dic['id'] = parseInt(l[5]);
+        dic['score'] = parseFloat(l[6]);
+        return dic;
+    }
+
+    function parse_rsn_rst(rsts_str)
+    {
+        let l = rsts_str.split(';');
+        let ret = [];
+
+        for(let i = 0; i < l.length; ++i)
+        {
+            let d = get_rsn_dict(l[i]);
+            if(d != null)
+            {
+                ret.push(d);
+            }
+        }
+
+        return ret;
+    }
+
+    //paint reasoning result
+    function paint_rsn(dom_canvas, dom_image, para_dict)
+    {
+        var rsn_w = 640;
+        var rsn_h = 640;
+
+        let img_w = dom_image.width;
+        let img_h = dom_image.height;
+
+        let w_rate = img_w / rsn_w;
+        let h_rate = img_h / rsn_h;
+
+        let x1 = parseInt(para_dict['x1']) * w_rate;
+        let x2 = parseInt(para_dict['x2']) * w_rate;
+        let y1 = parseInt(para_dict['y1']) * h_rate;
+        let y2 = parseInt(para_dict['y2']) * h_rate;
+
+        x1 = Math.ceil(x1);
+        y1 = Math.ceil(y1);
+        x2 = Math.floor(x2);
+        y2 = Math.floor(y2);
+
+        let ctx = dom_canvas.getContext('2d');
+        ctx.beginPath();
+        ctx.moveTo(x1, y1);
+        ctx.lineTo(x1, y2);
+        ctx.lineTo(x2, y2);
+        ctx.lineTo(x2, y1);
+        ctx.lineTo(x1, y1);
+        ctx.closePath();
+        ctx.lineWidth = 1;
+        ctx.strokeStyle = 'blue';
+        ctx.stroke();
+
+        //TODO: score and label
+    }
+
+    function clean_canvas(dom_canvas)
+    {
+        let ctx = dom_canvas.getContext('2d');
+        ctx.clearRect(0, 0, dom_canvas.width, dom_canvas.height);
+    }
+
+    function test_paint()
+    {
+        paint_rsn(
+            document.getElementById('canvas_rsn'),
+            document.getElementById('image_rsn'),
+            {'x1':30, 'y1':30, 'x2':200, 'y2':200, 'score':0.2021, 'label':2}
+            );
+    }
+
+    window.onload = function(){
+//        var video = document.getElementById("video_cam");
+        var image_cam = document.getElementById("image_cam");
+        var image_rsn = document.getElementById("image_rsn");
+        var canvas_rsn = document.getElementById('canvas_rsn');
+        var ws_cam = new WebSocket("ws://" + window.location.host + "/wscam");
+        var ws_rsn = new WebSocket("ws://" + window.location.host + "/wsrsn");
+
+        //camera image data
+        ws_cam.onmessage = function(msg) {
+            let arrayBuffer = msg.data;
+
+            var reader = new FileReader();
+            reader.onload = function(e) {
+                //console.log(e.target.result);
+                image_cam.src = e.target.result;
+            };
+            reader.readAsDataURL(arrayBuffer);
+        }
+
+        //yolo reason data
+        ws_rsn.onmessage = function(msg) {
+            let arrayBuffer = msg.data;
+
+            if(typeof(arrayBuffer) == 'string')
+            {
+                /* reasoning data */
+                lst = parse_rsn_rst(arrayBuffer);
+
+                clean_canvas(canvas_rsn);
+                for(let i = 0; i < lst.length; ++i)
+                {
+                    paint_rsn(canvas_rsn, image_rsn, lst[i]);
+                }
+            }
+            else
+            {
+                /* image data of reasoning */
+                var reader = new FileReader();
+                reader.onload = function(e) {
+                    //console.log(e.target.result);
+                    image_rsn.src = e.target.result;
+                };
+                reader.readAsDataURL(arrayBuffer);
+            }
+        }
+}
+
+</script>
+
+<body>
+
+<div>
+    <!-- <video id="video_cam" autoplay controls muted></video> -->
+    <img id="image_cam">
+    <div id="div_rsn">
+        <img id="image_rsn">
+        <canvas id="canvas_rsn" width="352px" height="288px">
+    </div>
+</div>
+
+</body>
+
+
+</html>

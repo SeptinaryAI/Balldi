@@ -1,0 +1,11 @@
+[Unit]
+Description=Balldi tof application
+Requires=balldi-drvserv.service
+
+[Service]
+Type=simple
+ExecStart={{BALLDI_DIR}}/tof_app/build/tofapp
+
+[Install]
+WantedBy=multi-user.target
+Alias=balldi-tof.service

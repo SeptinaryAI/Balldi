@@ -1,0 +1,102 @@
+        #colors_selector {
+            display: flex;
+            justify-content: flex-start;
+            align-items: center;
+            width:450px;
+            height:310px;
+        }
+
+        #colors_plane {
+            position: relative;
+            height:220px;
+            width:220px;
+            margin-left:0.5em;
+            background-color: #FF0000;
+        }
+
+        #colors_plane_base {
+            position: absolute;
+            z-index: 0;
+            height:100%;
+            width:100%;
+            padding: 0;
+            background: -moz-linear-gradient(left, white 0%, rgba(255,255,255,0) 100%);
+            background: -webkit-gradient(linear, left top, right top, color-stop(0%, white), color-stop(100%, rgba(255,255,255,0)));
+            background: -webkit-linear-gradient(left, white 0%, rgba(255,255,255,0) 100%);
+            background: -o-linear-gradient(left, white 0%, rgba(255,255,255,0) 100%);
+            background: -webkit-gradient(linear, left top, right top, from(white), to(rgba(255,255,255,0)));
+            background: linear-gradient(to right, white 0%, rgba(255,255,255,0) 100%);
+        }
+
+        #colors_plane_mask {
+            position: absolute;
+            z-index: 1;
+            height:100%;
+            width:100%;
+            padding: 0;
+            background: -moz-linear-gradient(top, rgba(0,0,0,0) 0%, black 100%);
+            background: -webkit-gradient(linear, left top, left bottom, color-stop(0%, rgba(0,0,0,0)), color-stop(100%, black));
+            background: -webkit-linear-gradient(top, rgba(0,0,0,0) 0%, black 100%);
+            background: -o-linear-gradient(top, rgba(0,0,0,0) 0%, black 100%);
+            background: -webkit-gradient(linear, left top, left bottom, from(rgba(0,0,0,0)), to(black));
+            background:linear-gradient(to bottom, rgba(0,0,0,0) 0%, black 100%);
+        }
+
+        #colors_plane_point {
+            pointer-events: none;
+            position: absolute;
+            z-index: 1;
+            height:10px;
+            width:10px;
+            border: 2.5px solid #3d3d3d;
+            border-radius: 6px;
+            padding: 0;
+            margin-top: -6.2px;
+            margin-left: -6.2px;
+        }
+
+        #colors_slider {
+            position: relative;
+            margin-left: 5px;
+            height:220px;
+            width:30px;
+            padding: 0;
+        }
+
+        #colors_slider_base {
+            width: 100%;
+            height: 100%;
+            padding: 0;
+            background: -moz-linear-gradient(top, #FF0000 0%, #F0F000 17%, #00FF00 33%, #00FFFF 50%, #0000FF 66%, #FF00FF 83%, #FF0000 100%);
+            background: -webkit-gradient(linear, left top, left bottom, color-stop(0%, #FF0000), color-stop(17%, #F0F000), color-stop(33%, #00FF00), color-stop(50%, #00FFFF), color-stop(66%, #0000FF), color-stop(83%, #FF00FF), color-stop(100%, #FF0000));
+            background: -webkit-linear-gradient(top, #FF0000 0%, #F0F000 17%, #00FF00 33%, #00FFFF 50%, #0000FF 66%, #FF00FF 83%, #FF0000 100%);
+            background: -o-linear-gradient(top, #FF0000 0%, #F0F000 17%, #00FF00 33%, #00FFFF 50%, #0000FF 66%, #FF00FF 83%, #FF0000 100%);
+            background: -webkit-gradient(linear, left top, left bottom, from(#FF0000), color-stop(17%, #F0F000), color-stop(33%, #00FF00), color-stop(50%, #00FFFF), color-stop(66%, #0000FF), color-stop(83%, #FF00FF), to(#FF0000));
+            background: linear-gradient(to bottom, #FF0000 0%, #F0F000 17%, #00FF00 33%, #00FFFF 50%, #0000FF 66%, #FF00FF 83%, #FF0000 100%);
+        }
+
+        #colors_slider_point {
+            pointer-events: none;
+            position: absolute;
+            z-index: 1;
+            height:4px;
+            width:36px;
+            border: 3px solid #3d3d3d;
+            border-radius: 4px;
+            padding: 0;
+            margin-top: -4.4px;
+            margin-left: -5px;
+        }
+
+        #colors_display {
+            height: 220px;
+            width: 70px;
+            margin-left:5px;
+        }
+
+        #color_display_block {
+            width:100%;
+            height: 30px;
+            padding:0;
+            margin-top:0.5em;
+        }

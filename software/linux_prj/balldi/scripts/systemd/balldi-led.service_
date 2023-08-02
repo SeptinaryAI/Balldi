@@ -1,0 +1,11 @@
+[Unit]
+Description=Balldi led application
+Requires=balldi-drvserv.service
+
+[Service]
+Type=simple
+ExecStart={{BALLDI_DIR}}/led_app/build/ledapp
+
+[Install]
+WantedBy=multi-user.target
+Alias=balldi-led.service

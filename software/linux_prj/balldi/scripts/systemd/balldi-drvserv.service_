@@ -1,0 +1,10 @@
+[Unit]
+Description=Balldi driver service
+
+[Service]
+Type=simple
+ExecStart={{BALLDI_DIR}}/drv_server/build/drv_server.out
+
+[Install]
+WantedBy=multi-user.target
+Alias=balldi-drvserv.service

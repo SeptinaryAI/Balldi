@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html>
+
+<head lang="zh">
+	<meta charset="UTF-8">
+	<title>LED</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no" />
+
+	<link href="css/color_selector.css?v=3" rel="stylesheet" type="text/css" />
+</head>
+
+<style>
+    body{
+        display:flex;
+        position:fixed;
+        justify-content: space-around;
+        left:0;
+        width:100%;
+        top:0;
+        height:100%;
+        margin:0;
+        padding:0;
+        border:0;
+        flex-direction: column;
+    }
+
+    .div-led-set-mode{
+        width:30%;
+    }
+
+    .div-led-set-brightness{
+        width:70%;
+    }
+
+    .div-led-set{
+        display:flex;
+        justify-content:space-between;
+    }
+
+    .a-item-left{
+        margin-left: 0.1em;
+        font-size:1.05em;
+        font-weight:bold;
+    }
+
+    .btn-item{
+        margin-left:0.5em;
+    }
+
+    .div-line-area{
+        display:flex;
+        justify-content: space-between;
+        flex-direction: row;
+        max-height:2em;
+    }
+
+	#read_para{
+        display:flex;
+		width: 45%;
+		max-height: 1.8em;
+		background-color:rgb(198, 208, 230);
+		margin:0;
+		padding:0;
+		border:0;
+		display:flex;
+		flex-direction: column;
+        justify-content: flex-start;
+		align-items: flex-start;
+	}
+
+	#log_area{
+        /*display:flex;*/
+        display:none;
+		width:45%;
+		max-height: 250px;
+		resize:none;
+		overflow-y:scroll;
+		user-select:none;
+		z-index:0;
+	}
+
+
+</style>
+
+<script type="importmap">
+	{
+		"imports": {
+			"ws": "/js/ws.js",
+            "color_sel": "/js/color_selector.js"
+		}
+	}
+</script>
+
+<script type="module">
+
+	import * as WS from 'ws';
+	import * as COLOR_SEL from 'color_sel';
+
+    const LED_MODE_NORMAL   =  0;
+    const LED_MODE_BREATH   =  1;
+    const LED_MODE_FLASH    =  2;
+
+    const USRCMD_SET_LED1_COLOR      = '224'
+    const USRCMD_SET_LED1_BRIGHTNESS = '225'
+    const USRCMD_SET_LED1_MODE       = '226'
+    const USRCMD_SET_LED2_COLOR      = '227'
+    const USRCMD_SET_LED2_BRIGHTNESS = '228'
+    const USRCMD_SET_LED2_MODE       = '229'
+
+    var led_para_last = [
+        {
+            'color':0x1000000,
+            'brightness':-1,
+            'mode':-1
+        },
+        {
+            'color':0x1000000,
+            'brightness':-1,
+            'mode':-1
+        }
+    ];
+    var led_para = [
+        {
+            'color':0x00FF00,
+            'brightness':10000,
+            'mode':LED_MODE_NORMAL
+        },
+        {
+            'color':0xFFFFFF,
+            'brightness':5000,
+            'mode':LED_MODE_BREATH
+        }
+    ];
+
+	var log_cnt = 0
+	var log_step = 15;
+	var wlog = function(log){
+		var log_area = document.getElementById("log_area");
+
+		if(log_cnt < log_step)
+		{
+			log_cnt += 1;
+		}
+		else
+		{
+			log_area.value = "";
+			log_cnt = 0;
+		}
+
+		log_area.value += log + "\n";
+	}
+
+    const ws = new WS.Ws_drv(
+                    "ws://" + window.location.host + "/wsdrv",
+                    wlog,
+                    {}
+                );
+
+    function color_rgb_to_grb(rgb)
+    {
+        return ((rgb & 0xFF0000) >> 8) 
+            | ((rgb & 0x00FF00) << 8)
+            | ((rgb & 0x0000FF));
+    }
+
+    function send_led_para_all()
+    {
+        if(led_para_last[0]['color'] != led_para[0]['color'])
+        {
+            ws.send_cmd(USRCMD_SET_LED1_COLOR     , led_para[0]['color'].toString());
+            led_para_last[0]['color'] = led_para[0]['color'];
+        }
+
+        if(led_para_last[0]['brightness'] != led_para[0]['brightness'])
+        {
+            ws.send_cmd(USRCMD_SET_LED1_BRIGHTNESS, led_para[0]['brightness'].toString());
+            led_para_last[0]['brightness'] = led_para[0]['brightness'];
+        }
+
+        if(led_para_last[0]['mode'] != led_para[0]['mode'])
+        {
+            ws.send_cmd(USRCMD_SET_LED1_MODE      , led_para[0]['mode'].toString());
+            led_para_last[0]['mode'] = led_para[0]['mode'];
+        }
+
+        if(led_para_last[1]['color'] != led_para[1]['color'])
+        {
+            ws.send_cmd(USRCMD_SET_LED2_COLOR     , led_para[1]['color'].toString());
+            led_para_last[1]['color'] = led_para[1]['color'];
+        }
+
+        if(led_para_last[1]['brightness'] != led_para[1]['brightness'])
+        {
+            ws.send_cmd(USRCMD_SET_LED2_BRIGHTNESS, led_para[1]['brightness'].toString());
+            led_para_last[1]['brightness'] = led_para[1]['brightness'];
+        }
+
+        if(led_para_last[1]['mode'] != led_para[1]['mode'])
+        {
+            ws.send_cmd(USRCMD_SET_LED2_MODE      , led_para[1]['mode'].toString());
+            led_para_last[1]['mode'] = led_para[1]['mode'];
+        }
+    }
+
+    function update_color_by_select() {
+        let now_rgb = COLOR_SEL.color_get_select_rgb();
+        let now_grb = color_rgb_to_grb(now_rgb);
+        led_para[0]['color'] = now_grb;
+        led_para[1]['color'] = now_grb;
+    }
+
+    function led_change_brightness(lednum, val) {
+        if(val < 0)
+        {
+            if(led_para[lednum-1]["brightness"] < (-val))
+            {
+                led_para[lednum-1]["brightness"] = 0;
+                return ;
+            }
+        }
+        else
+        {
+            if(led_para[lednum-1]["brightness"] > (10000-val))
+            {
+                led_para[lednum-1]["brightness"] = 10000;
+                return ;
+            }
+        }
+        led_para[lednum-1]["brightness"] += val;
+    }
+
+
+	window.onload = function(){
+
+        //color_selector reg
+        COLOR_SEL.color_selector_event_reg();
+        //color mode select reg
+        var mode_led1 = document.getElementsByName("mode_led1")[0];
+        var mode_led2 = document.getElementsByName("mode_led2")[0];
+        var led1_sub = document.getElementById("led1_sub_1000");
+        var led1_add = document.getElementById("led1_add_1000");
+        var led2_sub = document.getElementById("led2_sub_1000");
+        var led2_add = document.getElementById("led2_add_1000");
+        var brightness_led1 = document.getElementById("brightness_led1");
+        var brightness_led2 = document.getElementById("brightness_led2");
+        mode_led1.onchange = function(event) {
+            led_para[0]["mode"] = event.target.value;
+        }
+        mode_led2.onchange = function(event) {
+            led_para[1]["mode"] = event.target.value;
+        }
+        led1_sub.onclick = function(event) {
+            led_change_brightness(1, -1000);
+            brightness_led1.text = led_para[0]["brightness"];
+        }
+        led1_add.onclick = function(event) {
+            led_change_brightness(1, 1000);
+            brightness_led1.text = led_para[0]["brightness"];
+        }
+        led2_sub.onclick = function(event) {
+            led_change_brightness(2, -1000);
+            brightness_led2.text = led_para[1]["brightness"];
+        }
+        led2_add.onclick = function(event) {
+            led_change_brightness(2, 1000);
+            brightness_led2.text = led_para[1]["brightness"];
+        }
+		//init
+		ws.init();
+
+		//ws heart
+		setInterval(function() {
+			ws.send_cmd("999", "ping");
+		}, 1000 * 20);
+
+		setInterval(function() {
+            update_color_by_select();
+		}, 5 * 1);
+
+		setInterval(function() {
+            send_led_para_all();
+		}, 50 * 1);
+	}
+
+	export {  }
+</script>
+
+<body>
+
+
+<div class = "div-line-area">
+<div id = "read_para">
+
+</div>
+
+<textarea id = "log_area" readonly disable></textarea>
+</div>
+
+    <div id="colors_selector">
+        <div id="colors_plane">
+            <div id="colors_plane_base"></div>
+            <div id="colors_plane_mask"></div>
+            <div id="colors_plane_point"></div>
+        </div>
+        <div id="colors_slider">
+            <div id="colors_slider_base"></div>
+            <div id="colors_slider_point"></div>
+        </div>
+        <div id="colors_display">
+            <a id="color_now">#FFFFFF</a>
+            <div id="color_display_block"></div>
+        </div>
+    </div>
+
+    <div class="div-led-set">
+        <div class="div-led-set-mode">
+            <a class="a-item-left">LED1 Mode</a>
+            </br>
+            <select name="mode_led1">
+                <option selected="selected" value="0">Normal</option>
+                <option value="1">Breath</option>
+                <option value="2">Flash</option>
+            </select>
+        </div>
+        <div class="div-led-set-brightness">
+            <a class="a-item-left">Brightness:</a>
+            <a id="brightness_led1">10000</a>
+            <a>/10000</a>
+            </br>
+            <button class="btn-item" id="led1_sub_1000">-1000</button>
+            <button class="btn-item" id="led1_add_1000">+1000</button>
+        </div>
+    </div>
+
+    <div class="div-led-set">
+        <div class="div-led-set-mode">
+            <a class="a-item-left">LED2 Mode</a>
+            </br>
+            <select name="mode_led2">
+                <option value="0">Normal</option>
+                <option selected="selected" value="1">Breath</option>
+                <option value="2">Flash</option>
+            </select>
+        </div>
+        <div class="div-led-set-brightness">
+            <a class="a-item-left">Brightness:</a>
+            <a id="brightness_led2">5000</a>
+            <a>/10000</a>
+            </br>
+            <button class="btn-item" id="led2_sub_1000">-1000</button>
+            <button class="btn-item" id="led2_add_1000">+1000</button>
+        </div>
+    </div>
+
+
+</body>
+
+</html>

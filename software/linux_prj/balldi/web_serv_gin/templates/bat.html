@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html>
+
+<head lang="zh">
+	<meta charset="UTF-8">
+	<title>Charge about</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no" />
+</head>
+
+<style>
+    body{
+        display:flex;
+        position:fixed;
+        justify-content: center;
+        left:0;
+        width:100%;
+        top:0;
+        height:100%;
+        margin:0;
+        padding:0;
+        border:0;
+        flex-direction: column;
+    }
+
+    .a-item-left{
+        margin-left:0.2em;
+    }
+
+    .a-item-right{
+        margin-right:0.2em;
+    }
+
+    .div-bat-text{
+        display:flex;
+    }
+
+    .div-bat-ui{
+        display:flex;
+        align-items: center;
+    }
+
+    #bat_display{
+        display:flex;
+        flex-direction: column;
+    }
+
+    #bat_tail_block{
+        height:80px;
+        width:16px;
+        padding:0;
+        margin:0;
+        background-color:#686868;
+    }
+
+    .div-bat-body{
+    }
+
+    #bat_body_block{
+        display:flex;
+        align-items: center;
+        justify-content: center;
+        height:78px;
+        width:160px;
+        padding:0;
+        margin:0;
+        border:solid 1px #686868;
+        background-color:#FFFFFF;
+    }
+    #bat_head_block1{
+        height:80px;
+        width:16px;
+        padding:0;
+        margin:0;
+        background-color:#686868;
+    }
+    #bat_head_block2{
+        height:20px;
+        width:16px;
+        padding:0;
+        margin:0;
+        background-color:#686868;
+    }
+
+    .div-bat-set{
+        display:flex;
+        flex-direction: column;
+    }
+
+    .div-bat-charge-level{
+        display:flex;
+    }
+
+    .div-bat-charge-level-block{
+        width:40px;
+        height:40px;
+        padding:0;
+        margin-right:5px;
+        border:solid 1px #00D9CB;
+        font-size:2em;
+        color:#CCCCCC;
+    }
+</style>
+
+<script type="importmap">
+	{
+		"imports": {
+			"ws": "/js/ws.js"
+		}
+	}
+</script>
+
+<script type="module">
+
+	import * as WS from 'ws';
+
+	const cmd_get_dic = {
+		"48":0,		//bat vol
+		"49":0,		//prog vol
+		"50":0,		//chrg speed level
+		"51":0,		//is chrg
+		"52":0,		//is stdby
+	};
+
+    const bat_charge_level_to_resis = [
+        99999999999999999999, 10000, 5100, 3377, 2000, 1667, 1436, 1256
+    ];
+
+    const ws = new WS.Ws_drv(
+                    "ws://" + window.location.host + "/wsdrv",
+                    console.log,
+                    cmd_get_dic
+                );
+
+    var now_prog_vol = 0;
+    var now_charge_speed = 0;
+
+    function set_text_charge_current()
+    {
+        let prog_vol = cmd_get_dic['49'];
+        let chrg_rate = cmd_get_dic['50']
+        let curr = (1100 * prog_vol / bat_charge_level_to_resis[chrg_rate] / 1000).toFixed(3);
+        if(curr < 0.001)
+            document.getElementById("bat_charge_current").text = "0";
+        else
+            document.getElementById("bat_charge_current").text = "" + curr;
+    }
+
+    function set_text_bat_vol(val)
+    {
+        var bat_color_list = ["#BF3E0D", "#EBA000", "#A8C704", "#0093DF"];
+
+        let bat_body_blk = document.getElementById("bat_body_block");
+
+        if(val < 3300)
+        {
+            bat_body_blk.style.backgroundColor = bat_color_list[0];
+        }
+        else if(val < 3600)
+        {
+            bat_body_blk.style.backgroundColor = bat_color_list[1];
+        }
+        else if(val < 3900)
+        {
+            bat_body_blk.style.backgroundColor = bat_color_list[2];
+        }
+        else //if(val < 42)
+        {
+            bat_body_blk.style.backgroundColor = bat_color_list[3];
+        }
+
+        document.getElementById("bat_vol_v").text = ""+ (val / 1000);
+    }
+
+    function set_text_prog_vol(val)
+    {
+        document.getElementById("bat_prog_vol").text = ""+ (val / 1000).toFixed(3);
+        set_text_charge_current();
+    }
+
+    function set_text_chrg_rate(val)
+    {
+        let base_str = "bat_charge_level_";
+
+        for(let i = 0; i <= 7; i++)
+        {
+            if(i <= val)
+                document.getElementById(base_str+""+i).style.backgroundColor = "#00D9CB";
+            else
+                document.getElementById(base_str+""+i).style.backgroundColor = "#FFFFFF";
+        }
+        set_text_charge_current();
+    }
+
+    function set_chrg_rate(val)
+    {
+		ws.send_cmd("194", val);
+    }
+
+    function set_text_stdby(val)
+    {
+        //TODO: maybe need nothing
+    }
+    
+
+    function set_dom_readval_text(domid, getcmd)
+    {
+        if(domid == "bat_vol")
+        {
+            set_text_bat_vol(cmd_get_dic["48"]);
+        }
+        else if(domid == "prog_vol")
+        {
+            set_text_prog_vol(cmd_get_dic["49"]);
+        }
+        else if(domid == "chrg_rate")
+        {
+            set_text_chrg_rate(cmd_get_dic["50"]);
+        }
+        else if(domid == "is_stby")
+        {
+            set_text_stdby(cmd_get_dic["52"]);
+        }
+    }
+
+	window.onload = function(){
+        var bat_charge_level_blks = document.getElementsByClassName("div-bat-charge-level-block")
+        for(let i = 0; i < bat_charge_level_blks.length; i++)
+        {
+            bat_charge_level_blks[i].addEventListener("click", function(event) {
+                let txt = event.currentTarget.textContent;
+                set_chrg_rate(txt);
+            });
+        }
+
+		//init
+		ws.init();
+
+		//ws heart
+		setInterval(function() {
+			ws.send_cmd("999", "ping");
+		}, 1000 * 20);
+
+		//cmd get val
+		setInterval(function() {
+			ws.send_cmd("48", "0");
+			ws.send_cmd("49", "0");
+			ws.send_cmd("50", "0");
+			//ws.send_cmd("51", "0");
+			ws.send_cmd("52", "0");
+			setTimeout(function(){
+				set_dom_readval_text("bat_vol", "48");
+				set_dom_readval_text("prog_vol", "49");
+				set_dom_readval_text("chrg_rate", "50");
+				//set_dom_readval_text("is_chrg", "51");
+				set_dom_readval_text("is_stby", "52");
+			}, 1000);
+		}, 1000 * 1);
+	}
+
+	export {  }
+</script>
+
+<body>
+
+
+<div class = "div-line-area">
+<div id = "read_para">
+	<a class = "controller_getval" id = "bat_vol"></a>
+	<a class = "controller_getval" id = "prog_vol"></a>
+	<a class = "controller_getval" id = "chrg_rate"></a>
+	<a class = "controller_getval" id = "is_chrg"></a>
+	<a class = "controller_getval" id = "is_stby"></a>
+</div>
+</div>
+
+
+
+<div id="bat_display">
+    <div class="div-bat-text">
+        <a class="a-item-left">Prog voltage:</a>
+        <a class="a-item-val" id="bat_prog_vol">-</a>
+        <a class="a-item-right">V</a>
+        <a class="a-item-left">Charge current:</a>
+        <a class="a-item-val" id="bat_charge_current">-</a>
+        <a class="a-item-right">A</a>
+    </div>
+    <div class="div-bat-ui">
+        <div id="bat_tail_block"></div>
+        <div class="div-bat-body" id="bat_body_block">
+            <a class="a-item-val" id="bat_vol_v">-</a>
+            <a class="a-item-right">V</a>
+        </div>
+        <div id="bat_head_block1"></div>
+        <div id="bat_head_block2"></div>
+    </div>
+    <div class="div-bat-set">
+        <a>Charge speed level:</a>
+        <div class="div-bat-charge-level">
+            <div class="div-bat-charge-level-block" id="bat_charge_level_0">0</div>
+            <div class="div-bat-charge-level-block" id="bat_charge_level_1">1</div>
+            <div class="div-bat-charge-level-block" id="bat_charge_level_2">2</div>
+            <div class="div-bat-charge-level-block" id="bat_charge_level_3">3</div>
+            <div class="div-bat-charge-level-block" id="bat_charge_level_4">4</div>
+            <div class="div-bat-charge-level-block" id="bat_charge_level_5">5</div>
+            <div class="div-bat-charge-level-block" id="bat_charge_level_6">6</div>
+            <div class="div-bat-charge-level-block" id="bat_charge_level_7">7</div>
+        </div>
+    </div>
+</div>
+
+</body>
+
+</html>

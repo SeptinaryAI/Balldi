@@ -1,0 +1,240 @@
+/*
+Program of a spherical robot called Balldi, it is a funny IoT device.
+Its reference prototype is SAMSUNG company's Ballie.
+
+Copyright (C) <2023> <SeptinaryAI https://github.com/SeptinaryAI>
+
+This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License along with this program; if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+*/
+#include <stdint.h>
+#include "msg_serv.h"
+
+//maybe you don't need hash
+int data_map[0x100] =
+{
+	-1, //0x00
+	-1, //0x01
+	-1, //0x02
+	-1, //0x03
+	-1, //0x04
+	-1, //0x05
+	-1, //0x06
+	-1, //0x07
+	-1, //0x08
+	-1, //0x09
+	-1, //0x0a
+	-1, //0x0b
+	-1, //0x0c
+	-1, //0x0d
+	-1, //0x0e
+	-1, //0x0f
+	-1, //0x10
+	-1, //0x11
+	-1, //0x12
+	-1, //0x13
+	-1, //0x14
+	-1, //0x15
+	-1, //0x16
+	-1, //0x17
+	-1, //0x18
+	-1, //0x19
+	-1, //0x1a
+	-1, //0x1b
+	-1, //0x1c
+	-1, //0x1d
+	-1, //0x1e
+	-1, //0x1f
+	-1, //0x20
+	-1, //0x21
+	-1, //0x22
+	-1, //0x23
+	-1, //0x24
+	-1, //0x25
+	-1, //0x26
+	-1, //0x27
+	-1, //0x28
+	-1, //0x29
+	-1, //0x2a
+	-1, //0x2b
+	-1, //0x2c
+	-1, //0x2d
+	-1, //0x2e
+	-1, //0x2f
+	-1, //0x30
+	-1, //0x31
+	-1, //0x32
+	-1, //0x33
+	-1, //0x34
+	-1, //0x35
+	-1, //0x36
+	-1, //0x37
+	-1, //0x38
+	-1, //0x39
+	-1, //0x3a
+	-1, //0x3b
+	-1, //0x3c
+	-1, //0x3d
+	-1, //0x3e
+	-1, //0x3f
+	-1, //0x40
+	-1, //0x41
+	-1, //0x42
+	-1, //0x43
+	-1, //0x44
+	-1, //0x45
+	-1, //0x46
+	-1, //0x47
+	-1, //0x48
+	-1, //0x49
+	-1, //0x4a
+	-1, //0x4b
+	-1, //0x4c
+	-1, //0x4d
+	-1, //0x4e
+	-1, //0x4f
+	-1, //0x50
+	-1, //0x51
+	-1, //0x52
+	-1, //0x53
+	-1, //0x54
+	-1, //0x55
+	-1, //0x56
+	-1, //0x57
+	-1, //0x58
+	-1, //0x59
+	-1, //0x5a
+	-1, //0x5b
+	-1, //0x5c
+	-1, //0x5d
+	-1, //0x5e
+	-1, //0x5f
+	-1, //0x60
+	-1, //0x61
+	-1, //0x62
+	-1, //0x63
+	-1, //0x64
+	-1, //0x65
+	-1, //0x66
+	-1, //0x67
+	-1, //0x68
+	-1, //0x69
+	-1, //0x6a
+	-1, //0x6b
+	-1, //0x6c
+	-1, //0x6d
+	-1, //0x6e
+	-1, //0x6f
+	-1, //0x70
+	-1, //0x71
+	-1, //0x72
+	-1, //0x73
+	-1, //0x74
+	-1, //0x75
+	-1, //0x76
+	-1, //0x77
+	-1, //0x78
+	-1, //0x79
+	-1, //0x7a
+	-1, //0x7b
+	-1, //0x7c
+	-1, //0x7d
+	-1, //0x7e
+	-1, //0x7f
+	-1, //0x80
+	-1, //0x81
+	-1, //0x82
+	-1, //0x83
+	-1, //0x84
+	-1, //0x85
+	-1, //0x86
+	-1, //0x87
+	-1, //0x88
+	-1, //0x89
+	-1, //0x8a
+	-1, //0x8b
+	-1, //0x8c
+	-1, //0x8d
+	-1, //0x8e
+	-1, //0x8f
+	-1, //0x90
+	-1, //0x91
+	-1, //0x92
+	-1, //0x93
+	-1, //0x94
+	-1, //0x95
+	-1, //0x96
+	-1, //0x97
+	-1, //0x98
+	-1, //0x99
+	-1, //0x9a
+	-1, //0x9b
+	-1, //0x9c
+	-1, //0x9d
+	-1, //0x9e
+	-1, //0x9f
+	-1, //0xa0
+	-1, //0xa1
+	-1, //0xa2
+	-1, //0xa3
+	-1, //0xa4
+	-1, //0xa5
+	-1, //0xa6
+	-1, //0xa7
+	-1, //0xa8
+	-1, //0xa9
+	-1, //0xaa
+	-1, //0xab
+	-1, //0xac
+	-1, //0xad
+	-1, //0xae
+	-1, //0xaf
+	-1, //0xb0
+	-1, //0xb1
+	-1, //0xb2
+	-1, //0xb3
+	-1, //0xb4
+	-1, //0xb5
+	-1, //0xb6
+	-1, //0xb7
+	-1, //0xb8
+	-1, //0xb9
+	-1, //0xba
+	-1, //0xbb
+	-1, //0xbc
+	-1, //0xbd
+	-1, //0xbe
+	-1, //0xbf
+	-1, //0xc0
+	-1, //0xc1
+	-1, //0xc2
+	//max cmd code = 0xc2
+};
+
+int DataSize = sizeof(data_map) / sizeof(data_map[0]);
+
+/**
+ * will save latest data get or send
+ * @param key
+ * if key is read cmd : save latest read val
+ * if key is ctl cmd : save latest set val
+ */
+void save_data(uint8_t key, uint16_t val)
+{
+    if(key >= DataSize)
+        return ;
+
+    data_map[key] = val;
+}
+
+int get_data(uint8_t key)
+{
+    if(key >= DataSize)
+        return -1;
+
+    return data_map[key];
+}
+
